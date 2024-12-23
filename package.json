@@ -3,6 +3,7 @@
   "displayName": "Unsaved Highlighter",
   "description": "Highlights unsaved lines of code in the editor",
   "version": "0.0.3",
+  "icon": "images/icon.png",
   "publisher": "ovrdsz",
   "repository": {
     "type": "git",
