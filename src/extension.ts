@@ -5,7 +5,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const unsavedChangeDecorationType = vscode.window.createTextEditorDecorationType({
         backgroundColor: 'rgba(255, 255, 0, 0.2)',
-        isWholeLine: true  // Cambiado a true para líneas completas
+        isWholeLine: true
     });
 
     let activeEditor = vscode.window.activeTextEditor;
@@ -36,7 +36,6 @@ export function activate(context: vscode.ExtensionContext) {
         const endLine = change.range.end.line;
         const newLineCount = change.text.split('\n').length - 1;
         
-        // Marcar todas las líneas afectadas
         for (let i = startLine; i <= endLine + newLineCount; i++) {
             affectedLines.push(i);
         }
@@ -86,7 +85,6 @@ export function activate(context: vscode.ExtensionContext) {
                 const lines = getOrCreateModifiedLines(event.document);
                 
                 event.contentChanges.forEach(change => {
-                    // Manejar todos los tipos de cambios
                     const affectedLines = handleNewLines(change);
                     affectedLines.forEach(line => lines.add(line));
                 });
