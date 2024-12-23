@@ -1,71 +1,48 @@
-# unsaved-highlighter-ovr README
+# Unsaved Lines Highlighter
 
-This is the README for your extension "unsaved-highlighter-ovr". After writing up a brief description, we recommend including the following sections.
+Una extensión para Visual Studio Code que hace más visual el proceso de edición resaltando las líneas que han sido modificadas pero aún no se han guardado.
 
-## Features
+## 🌟 Características
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 🎨 Resalta automáticamente las líneas que has modificado
+- 💾 El resaltado desaparece cuando guardas el archivo
+- 🚀 Funciona instantáneamente sin configuración adicional
+- 📝 Compatible con todos los tipos de archivo
+- 🪶 Ligero y eficiente - no afecta el rendimiento del editor
 
-For example if there is an image subfolder under your extension project workspace:
+## 🚀 Instalación
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Descarga el archivo `.vsix` desde [la última release](https://github.com/ovrdsz/unsaved-highlighter-ovr/releases/latest)
+2. Instala la extensión de una de estas formas:
+   - **Opción 1**: Abre VS Code, presiona `Ctrl+Shift+P`, escribe "Install from VSIX" y selecciona el archivo descargado
+   - **Opción 2**: Desde la terminal, ejecuta:
+     ```bash
+     code --install-extension path/to/unsaved-highlighter-ovr-0.0.1.vsix
+     ```
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 💡 Uso
 
-## Requirements
+1. Simplemente abre cualquier archivo en VS Code
+2. Comienza a editar
+3. Verás que las líneas modificadas se resaltan automáticamente
+4. Al guardar el archivo (Ctrl+S o Cmd+S), el resaltado desaparece
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+No requiere ninguna configuración adicional - funciona de inmediato.
 
-## Extension Settings
+## ⚙️ Personalización
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Por ahora la extensión usa una configuración predeterminada. Próximamente se añadirán opciones para personalizar:
+- Color del resaltado
+- Intensidad del resaltado
+- Comportamiento de actualización
 
-For example:
+## 🐛 Reportar Problemas
 
-This extension contributes the following settings:
+Si encuentras algún problema o tienes una sugerencia:
+1. Ve a la [sección de issues](https://github.com/ovrdsz/unsaved-highlighter-ovr/issues)
+2. Haz clic en "New Issue"
+3. Describe el problema o sugerencia con tanto detalle como sea posible
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## 👨‍💻 Desarrollado por
 
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Sebastián Arias - [ovrdsz](https://github.com/ovrdsz)

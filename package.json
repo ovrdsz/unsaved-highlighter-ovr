@@ -3,25 +3,30 @@
   "displayName": "Unsaved Highlighter",
   "description": "Highlights unsaved lines of code in the editor",
   "version": "0.0.1",
+  "publisher": "ovrdsz",
   "repository": {
-      "type": "git",
-      "url": "https://github.com/ovrdsz/unsaved-highlighter-ovr"
+    "type": "git",
+    "url": "https://github.com/ovrdsz/unsaved-highlighter-ovr"
   },
   "engines": {
-      "vscode": "^1.80.0"
+    "vscode": "^1.80.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "scripts": {
-      "compile": "tsc -p ./",
-      "watch": "tsc -watch -p ./",
-      "package": "vsce package"
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
   },
   "devDependencies": {
-      "@types/vscode": "^1.80.0",
-      "@types/node": "^16.x",
-      "typescript": "^5.1.3",
-      "@vscode/vsce": "^2.15.0"
+    "@types/node": "^16.x",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.32.0",
+    "typescript": "^5.1.3"
   }
 }
