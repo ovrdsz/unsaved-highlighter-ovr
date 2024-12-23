@@ -5,65 +5,43 @@ export function activate(context: vscode.ExtensionContext) {
 
     const unsavedChangeDecorationType = vscode.window.createTextEditorDecorationType({
         backgroundColor: 'rgba(255, 255, 0, 0.2)',
-        isWholeLine: false
+        isWholeLine: true  // Cambiado a true para líneas completas
     });
 
     let activeEditor = vscode.window.activeTextEditor;
-    const modifiedRanges = new Map<string, vscode.Range[]>();
+    const modifiedLines = new Map<string, Set<number>>();
 
     function getDocumentKey(document: vscode.TextDocument): string {
         return document.uri.toString();
     }
 
-    function clearModifiedRanges(document: vscode.TextDocument) {
+    function clearModifiedLines(document: vscode.TextDocument) {
         const key = getDocumentKey(document);
-        modifiedRanges.delete(key);
+        modifiedLines.delete(key);
     }
 
-    function getOrCreateModifiedRanges(document: vscode.TextDocument): vscode.Range[] {
+    function getOrCreateModifiedLines(document: vscode.TextDocument): Set<number> {
         const key = getDocumentKey(document);
-        let ranges = modifiedRanges.get(key);
-        if (!ranges) {
-            ranges = [];
-            modifiedRanges.set(key, ranges);
+        let lines = modifiedLines.get(key);
+        if (!lines) {
+            lines = new Set<number>();
+            modifiedLines.set(key, lines);
         }
-        return ranges;
+        return lines;
     }
 
-    function mergeOverlappingRanges(ranges: vscode.Range[]): vscode.Range[] {
-        if (ranges.length <= 1) return ranges;
-
-        // Ordenar rangos por posición inicial
-        const sortedRanges = ranges.sort((a, b) => {
-            if (a.start.line !== b.start.line) {
-                return a.start.line - b.start.line;
-            }
-            return a.start.character - b.start.character;
-        });
-
-        const mergedRanges: vscode.Range[] = [];
-        let currentRange = sortedRanges[0];
-
-        for (let i = 1; i < sortedRanges.length; i++) {
-            const nextRange = sortedRanges[i];
-
-            // Verificar si los rangos se solapan o son adyacentes
-            if (currentRange.end.line > nextRange.start.line || 
-                (currentRange.end.line === nextRange.start.line && 
-                 currentRange.end.character >= nextRange.start.character - 1)) {
-                // Combinar rangos
-                currentRange = new vscode.Range(
-                    currentRange.start,
-                    nextRange.end.isAfter(currentRange.end) ? nextRange.end : currentRange.end
-                );
-            } else {
-                mergedRanges.push(currentRange);
-                currentRange = nextRange;
-            }
+    function handleNewLines(change: vscode.TextDocumentContentChangeEvent): number[] {
+        const affectedLines: number[] = [];
+        const startLine = change.range.start.line;
+        const endLine = change.range.end.line;
+        const newLineCount = change.text.split('\n').length - 1;
+        
+        // Marcar todas las líneas afectadas
+        for (let i = startLine; i <= endLine + newLineCount; i++) {
+            affectedLines.push(i);
         }
-
-        mergedRanges.push(currentRange);
-        return mergedRanges;
+        
+        return affectedLines;
     }
 
     function updateDecorations() {
@@ -75,16 +53,19 @@ export function activate(context: vscode.ExtensionContext) {
         
         if (!document.isDirty) {
             activeEditor.setDecorations(unsavedChangeDecorationType, []);
-            clearModifiedRanges(document);
+            clearModifiedLines(document);
             return;
         }
 
-        const ranges = getOrCreateModifiedRanges(document);
-        const mergedRanges = mergeOverlappingRanges(ranges);
+        const lines = getOrCreateModifiedLines(document);
+        const decorations: vscode.DecorationOptions[] = [];
 
-        const decorations = mergedRanges.map(range => ({
-            range: range
-        }));
+        lines.forEach(lineNumber => {
+            if (lineNumber < document.lineCount) {
+                const range = document.lineAt(lineNumber).range;
+                decorations.push({ range });
+            }
+        });
 
         activeEditor.setDecorations(unsavedChangeDecorationType, decorations);
     }
@@ -93,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
         activeEditor = editor;
         if (editor) {
             if (!editor.document.isDirty) {
-                clearModifiedRanges(editor.document);
+                clearModifiedLines(editor.document);
             }
             updateDecorations();
         }
@@ -102,22 +83,15 @@ export function activate(context: vscode.ExtensionContext) {
     let disposableTextChange = vscode.workspace.onDidChangeTextDocument(event => {
         if (activeEditor && event.document === activeEditor.document) {
             if (event.document.isDirty) {
-                const ranges = getOrCreateModifiedRanges(event.document);
+                const lines = getOrCreateModifiedLines(event.document);
                 
                 event.contentChanges.forEach(change => {
-                    // Si es una inserción (rango vacío), crear un rango que cubra el texto insertado
-                    if (change.rangeLength === 0 && change.text.length > 0) {
-                        const endLine = change.range.start.line;
-                        const endChar = change.range.start.character + change.text.length;
-                        const endPosition = new vscode.Position(endLine, endChar);
-                        ranges.push(new vscode.Range(change.range.start, endPosition));
-                    } else {
-                        // Para otros tipos de cambios, usar el rango proporcionado
-                        ranges.push(change.range);
-                    }
+                    // Manejar todos los tipos de cambios
+                    const affectedLines = handleNewLines(change);
+                    affectedLines.forEach(line => lines.add(line));
                 });
             } else {
-                clearModifiedRanges(event.document);
+                clearModifiedLines(event.document);
             }
             
             updateDecorations();
@@ -125,14 +99,14 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let disposableSave = vscode.workspace.onDidSaveTextDocument(document => {
-        clearModifiedRanges(document);
+        clearModifiedLines(document);
         if (activeEditor && document === activeEditor.document) {
             updateDecorations();
         }
     });
 
     let disposableClose = vscode.workspace.onDidCloseTextDocument(document => {
-        clearModifiedRanges(document);
+        clearModifiedLines(document);
     });
 
     context.subscriptions.push(
