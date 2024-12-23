@@ -2,7 +2,7 @@
   "name": "unsaved-highlighter-ovr",
   "displayName": "Unsaved Highlighter",
   "description": "Highlights unsaved lines of code in the editor",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "ovrdsz",
   "repository": {
     "type": "git",

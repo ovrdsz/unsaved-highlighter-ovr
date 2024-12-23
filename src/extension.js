@@ -39,79 +39,83 @@ const vscode = __importStar(require("vscode"));
 function activate(context) {
     console.log('La extensión "unsaved-lines-highlighter" está activa');
     const unsavedLineDecorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+        backgroundColor: 'rgba(9, 255, 0, 0.2)',
         isWholeLine: true,
     });
-    let modifiedLines = new Map();
     let activeEditor = vscode.window.activeTextEditor;
-    let documentVersions = new Map();
+    const modifiedLines = new Map();
     function getDocumentKey(document) {
         return document.uri.toString();
+    }
+    function clearModifiedLines(document) {
+        const key = getDocumentKey(document);
+        modifiedLines.delete(key);
+    }
+    function getOrCreateModifiedLines(document) {
+        const key = getDocumentKey(document);
+        let lines = modifiedLines.get(key);
+        if (!lines) {
+            lines = new Set();
+            modifiedLines.set(key, lines);
+        }
+        return lines;
     }
     function updateDecorations() {
         if (!activeEditor) {
             return;
         }
         const document = activeEditor.document;
-        const documentKey = getDocumentKey(document);
-        const lines = modifiedLines.get(documentKey) || new Set();
+        // Si el documento no está modificado, no mostrar decoraciones
+        if (!document.isDirty) {
+            activeEditor.setDecorations(unsavedLineDecorationType, []);
+            clearModifiedLines(document);
+            return;
+        }
+        const lines = getOrCreateModifiedLines(document);
         const decorations = [];
-        lines.forEach(line => {
-            if (line < document.lineCount) {
-                const lineText = document.lineAt(line);
-                const range = lineText.range;
+        lines.forEach(lineNumber => {
+            if (lineNumber < document.lineCount) {
+                const range = document.lineAt(lineNumber).range;
                 decorations.push({ range });
             }
         });
         activeEditor.setDecorations(unsavedLineDecorationType, decorations);
     }
-    function clearModifiedLines(document) {
-        const documentKey = getDocumentKey(document);
-        modifiedLines.delete(documentKey);
-        documentVersions.delete(documentKey);
-        updateDecorations();
-    }
     let disposableEditorChange = vscode.window.onDidChangeActiveTextEditor(editor => {
         activeEditor = editor;
         if (editor) {
+            // Si el documento no está modificado, limpiar las líneas
+            if (!editor.document.isDirty) {
+                clearModifiedLines(editor.document);
+            }
             updateDecorations();
         }
     });
     let disposableTextChange = vscode.workspace.onDidChangeTextDocument(event => {
         if (activeEditor && event.document === activeEditor.document) {
-            const documentKey = getDocumentKey(event.document);
-            let lines = modifiedLines.get(documentKey);
-            if (!lines) {
-                lines = new Set();
-                modifiedLines.set(documentKey, lines);
-            }
-            const currentVersion = event.document.version;
-            const previousVersion = documentVersions.get(documentKey) || currentVersion;
-            const isUndo = currentVersion < previousVersion;
-            event.contentChanges.forEach(change => {
-                const startLine = change.range.start.line;
-                const endLine = change.range.end.line;
-                for (let line = startLine; line <= endLine; line++) {
-                    if (isUndo) {
-                        const lineText = event.document.lineAt(line).text;
-                        const isDifferent = event.document.isDirty &&
-                            lineText !== event.document.lineAt(line).text;
-                        if (!isDifferent) {
-                            lines.delete(line);
-                        }
-                    }
-                    else {
+            // Solo procesar si el documento está realmente modificado
+            if (event.document.isDirty) {
+                const lines = getOrCreateModifiedLines(event.document);
+                event.contentChanges.forEach(change => {
+                    for (let line = change.range.start.line; line <= change.range.end.line; line++) {
                         lines.add(line);
                     }
-                }
-            });
-            documentVersions.set(documentKey, currentVersion);
+                });
+            }
+            else {
+                // Si el documento no está modificado (por ejemplo, después de un undo completo)
+                clearModifiedLines(event.document);
+            }
             updateDecorations();
         }
     });
     let disposableSave = vscode.workspace.onDidSaveTextDocument(document => {
         clearModifiedLines(document);
+        if (activeEditor && document === activeEditor.document) {
+            updateDecorations();
+        }
     });
+    // Manejar cuando un documento se cierra
     let disposableClose = vscode.workspace.onDidCloseTextDocument(document => {
         clearModifiedLines(document);
     });
