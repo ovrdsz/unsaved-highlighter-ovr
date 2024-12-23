@@ -1,63 +1,83 @@
 import * as vscode from 'vscode';
 
-// Esta función se llama cuando tu extensión se activa
 export function activate(context: vscode.ExtensionContext) {
     console.log('La extensión "unsaved-lines-highlighter" está activa');
 
-    // Crear el decorador para las líneas no guardadas
     const unsavedLineDecorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(255, 255, 0, 0.2)', // Fondo amarillo transparente
+        backgroundColor: 'rgba(255, 255, 0, 0.2)',
         isWholeLine: true,
     });
 
-    // Mantener un registro de las líneas modificadas
     let modifiedLines = new Set<number>();
     let activeEditor = vscode.window.activeTextEditor;
+    let originalContent: string | undefined;
 
-    // Función para actualizar las decoraciones
     function updateDecorations() {
         if (!activeEditor) {
             return;
         }
 
         const decorations: vscode.DecorationOptions[] = [];
-        modifiedLines.forEach(line => {
-            const range = activeEditor!.document.lineAt(line).range;
-            decorations.push({ range });
-        });
+        const currentContent = activeEditor.document.getText();
+        
+        if (originalContent) {
+            const originalLines = originalContent.split('\n');
+            const currentLines = currentContent.split('\n');
+            
+            modifiedLines.forEach(lineNumber => {
+                if (lineNumber < originalLines.length && 
+                    lineNumber < currentLines.length && 
+                    originalLines[lineNumber] !== currentLines[lineNumber]) {
+                    const range = activeEditor!.document.lineAt(lineNumber).range;
+                    decorations.push({ range });
+                } else {
+                    modifiedLines.delete(lineNumber);
+                }
+            });
+        }
 
         activeEditor.setDecorations(unsavedLineDecorationType, decorations);
     }
 
-    // Registrar el evento para cambios en el editor activo
+    function saveOriginalContent(editor: vscode.TextEditor | undefined) {
+        if (editor) {
+            originalContent = editor.document.getText();
+            modifiedLines.clear();
+        }
+    }
+
     let disposableEditorChange = vscode.window.onDidChangeActiveTextEditor(editor => {
         activeEditor = editor;
-        if (editor) {
-            modifiedLines.clear();
-            updateDecorations();
-        }
+        saveOriginalContent(editor);
+        updateDecorations();
     });
 
-    // Registrar el evento para cambios en el texto
     let disposableTextChange = vscode.workspace.onDidChangeTextDocument(event => {
         if (activeEditor && event.document === activeEditor.document) {
+            if (!originalContent) {
+                originalContent = activeEditor.document.getText();
+            }
+            
             event.contentChanges.forEach(change => {
                 const startLine = change.range.start.line;
                 modifiedLines.add(startLine);
             });
+            
             updateDecorations();
         }
     });
 
-    // Registrar el evento para cuando se guarda el documento
     let disposableSave = vscode.workspace.onDidSaveTextDocument(document => {
         if (activeEditor && document === activeEditor.document) {
-            modifiedLines.clear();
+            saveOriginalContent(activeEditor);
             updateDecorations();
         }
     });
 
-    // Añadir a las suscripciones para limpiar correctamente
+    if (activeEditor) {
+        saveOriginalContent(activeEditor);
+    }
+
     context.subscriptions.push(
         disposableEditorChange,
         disposableTextChange,
@@ -66,5 +86,4 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-// Esta función se llama cuando tu extensión se desactiva
 export function deactivate() {}
