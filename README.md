@@ -1,3 +1,3 @@
 # Unsaved Lines Highlighter
 
-Una extensión para Visual Studio Code que resalta las líneas que han sido modificadas, pero aún no se han guardado.
+A Visual Studio Code extension that highlights lines that have been modified but haven't been saved yet.
